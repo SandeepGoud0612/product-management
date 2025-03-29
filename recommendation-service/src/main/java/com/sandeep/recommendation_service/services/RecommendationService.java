@@ -1,15 +1,16 @@
 package com.sandeep.recommendation_service.services;
 
-import java.util.List;
-
 import com.sandeep.api.recommendation.Recommendation;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface RecommendationService {
 
-	Recommendation createRecommendation(Recommendation recommendation);
+	Mono<Recommendation> createRecommendation(Recommendation recommendation);
 
-	List<Recommendation> getRecommendations(int productId);
+	Flux<Recommendation> getRecommendations(int productId);
 
-	void deleteRecommendations(int productId);
+	Mono<Void> deleteRecommendations(int productId);
 
 }

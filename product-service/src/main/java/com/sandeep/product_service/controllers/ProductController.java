@@ -2,7 +2,6 @@ package com.sandeep.product_service.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sandeep.api.product.Product;
@@ -10,6 +9,7 @@ import com.sandeep.api.product.ProductClient;
 import com.sandeep.product_service.services.ProductService;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,21 +20,21 @@ public class ProductController implements ProductClient {
 	private final ProductService productService;
 
 	@Override
-	public Product createProduct(Product product) {
+	public Mono<Product> createProduct(Product product) {
 		LOG.info("/product creates the product for productId={}", product.getProductId());
 		return productService.createProduct(product);
 	}
 
 	@Override
-	public Product getProduct(@PathVariable("productId") int productId) {
+	public Mono<Product> getProduct(int productId) {
 		LOG.info("/product returns the found product for productId={}", productId);
 		return productService.getProduct(productId);
 	}
 
 	@Override
-	public void deleteProduct(int productId) {
+	public Mono<Void> deleteProduct(int productId) {
 		LOG.info("/product deletes the product for productId={}", productId);
-		productService.deleteProduct(productId);
+		return productService.deleteProduct(productId);
 	}
 
 }

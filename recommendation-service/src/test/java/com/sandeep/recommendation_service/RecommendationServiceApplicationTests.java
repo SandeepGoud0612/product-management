@@ -1,12 +1,16 @@
 package com.sandeep.recommendation_service;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.just;
 
-import org.junit.jupiter.api.AfterAll;
+import java.util.Collections;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,23 +34,22 @@ class RecommendationServiceApplicationTests {
 
 	@BeforeEach
 	void setupDb() {
-		repository.deleteAll();
-	}
-
-	@AfterAll
-	void tearDown() {
-		repository.deleteAll();
+		repository.deleteAll().block();
 	}
 
 	@Test
 	void getRecommendationsByProductId() {
 		int productId = 1;
 
+		assertEquals(Collections.EMPTY_LIST, repository.findByProductId(productId).collectList().block());
+		assertEquals(0, (long) repository.count().block());
+
 		postAndVerifyRecommendation(productId, 1, OK);
 		postAndVerifyRecommendation(productId, 2, OK);
 		postAndVerifyRecommendation(productId, 3, OK);
 
-		assertEquals(3, repository.findByProductId(productId).size());
+		assertNotNull(repository.findByProductId(productId).collectList().block());
+		assertEquals(3, (long) repository.count().block());
 
 		getAndVerifyRecommendationsByProductId(productId, OK).jsonPath("$.length()").isEqualTo(3)
 				.jsonPath("$[2].productId").isEqualTo(productId).jsonPath("$[2].recommendationId").isEqualTo(3);
@@ -57,16 +60,20 @@ class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
+		assertEquals(Collections.EMPTY_LIST, repository.findByProductId(productId).collectList().block());
+		assertEquals(0, (long) repository.count().block());
+
 		postAndVerifyRecommendation(productId, recommendationId, OK).jsonPath("$.productId").isEqualTo(productId)
 				.jsonPath("$.recommendationId").isEqualTo(recommendationId);
 
-		assertEquals(1, repository.count());
+		assertNotNull(repository.findByProductId(productId).collectList().block());
+		assertEquals(1, (long) repository.count().block());
 
 		postAndVerifyRecommendation(productId, recommendationId, UNPROCESSABLE_ENTITY).jsonPath("$.path")
 				.isEqualTo("/recommendation").jsonPath("$.message")
 				.isEqualTo("Duplicate key, Product Id: 1, Recommendation Id:1");
 
-		assertEquals(1, repository.count());
+		assertEquals(1, (long) repository.count().block());
 	}
 
 	@Test
@@ -74,13 +81,23 @@ class RecommendationServiceApplicationTests {
 		int productId = 1;
 		int recommendationId = 1;
 
+		assertEquals(Collections.EMPTY_LIST, repository.findByProductId(productId).collectList().block());
+		assertEquals(0, (long) repository.count().block());
+
 		postAndVerifyRecommendation(productId, recommendationId, OK);
-		assertEquals(1, repository.findByProductId(productId).size());
+
+		assertNotNull(repository.findByProductId(productId).collectList().block());
+		assertEquals(1, (long) repository.count().block());
 
 		deleteAndVerifyRecommendationsByProductId(productId, OK);
-		assertEquals(0, repository.findByProductId(productId).size());
+
+		assertEquals(Collections.EMPTY_LIST, repository.findByProductId(productId).collectList().block());
+		assertEquals(0, (long) repository.count().block());
 
 		deleteAndVerifyRecommendationsByProductId(productId, OK);
+
+		assertEquals(Collections.EMPTY_LIST, repository.findByProductId(productId).collectList().block());
+		assertEquals(0, (long) repository.count().block());
 	}
 
 	@Test

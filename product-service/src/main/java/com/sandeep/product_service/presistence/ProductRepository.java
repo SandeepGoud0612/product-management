@@ -1,15 +1,13 @@
 package com.sandeep.product_service.presistence;
 
-import java.util.Optional;
-
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface ProductRepository
-		extends CrudRepository<ProductEntity, String>, PagingAndSortingRepository<ProductEntity, String> {
+import reactor.core.publisher.Mono;
 
-	Optional<ProductEntity> findByProductId(int productId);
+@Repository
+public interface ProductRepository extends ReactiveCrudRepository<ProductEntity, String> {
+
+	Mono<ProductEntity> findByProductId(int productId);
 
 }

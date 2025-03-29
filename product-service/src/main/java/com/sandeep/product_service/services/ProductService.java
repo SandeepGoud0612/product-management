@@ -2,12 +2,14 @@ package com.sandeep.product_service.services;
 
 import com.sandeep.api.product.Product;
 
+import reactor.core.publisher.Mono;
+
 public interface ProductService {
 
-	Product getProduct(int productId);
+	Mono<Product> getProduct(int productId);
 
-	Product createProduct(Product product);
+	Mono<Product> createProduct(Product product);
 
-	void deleteProduct(int productId);
+	Mono<Void> deleteProduct(int productId);
 
 }

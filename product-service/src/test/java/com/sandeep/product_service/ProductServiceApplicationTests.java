@@ -1,7 +1,8 @@
 package com.sandeep.product_service;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -10,7 +11,6 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static reactor.core.publisher.Mono.just;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -34,21 +34,20 @@ class ProductServiceApplicationTests {
 
 	@BeforeEach
 	void setupDb() {
-		repository.deleteAll();
-	}
-
-	@AfterAll
-	void tearDown() {
-		repository.deleteAll();
+		repository.deleteAll().block();
 	}
 
 	@Test
 	void getProductById() {
 		int productId = 1;
+		
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, (long)repository.count().block());
 
 		postAndVerifyProduct(productId, OK);
 
-		assertTrue(repository.findByProductId(productId).isPresent());
+		assertNotNull(repository.findByProductId(productId).block());
+		assertEquals(1, (long)repository.count().block());
 
 		getAndVerifyProduct(productId, OK).jsonPath("$.productId").isEqualTo(productId);
 	}
@@ -56,27 +55,37 @@ class ProductServiceApplicationTests {
 	@Test
 	void duplicateError() {
 		int productId = 1;
+		
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, (long)repository.count().block());
 
 		postAndVerifyProduct(productId, OK);
-
-		assertTrue(repository.findByProductId(productId).isPresent());
+		
+		assertNotNull(repository.findByProductId(productId).block());
+		assertEquals(1, (long)repository.count().block());
 
 		postAndVerifyProduct(productId, UNPROCESSABLE_ENTITY).jsonPath("$.path").isEqualTo("/product")
 				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: " + productId);
-
+		
+		assertEquals(1, (long)repository.count().block());
 	}
 
 	@Test
 	void deleteProduct() {
 		int productId = 1;
 
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, (long)repository.count().block());
+
 		postAndVerifyProduct(productId, OK);
-		assertTrue(repository.findByProductId(productId).isPresent());
+		
+		assertNotNull(repository.findByProductId(productId).block());
+		assertEquals(1, (long)repository.count().block());
 
 		deleteAndVerifyProduct(productId, OK);
-		assertFalse(repository.findByProductId(productId).isPresent());
-
-		deleteAndVerifyProduct(productId, OK);
+		
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, (long)repository.count().block());		
 	}
 
 	@Test
@@ -87,7 +96,6 @@ class ProductServiceApplicationTests {
 
 	@Test
 	void getProductNotFound() {
-
 		int productIdNotFound = 13;
 		getAndVerifyProduct(productIdNotFound, NOT_FOUND).jsonPath("$.path").isEqualTo("/product/" + productIdNotFound)
 				.jsonPath("$.message").isEqualTo("No product found for productId: " + productIdNotFound);
@@ -95,7 +103,6 @@ class ProductServiceApplicationTests {
 
 	@Test
 	void getProductInvalidParameterNegativeValue() {
-
 		int productIdInvalid = -1;
 
 		getAndVerifyProduct(productIdInvalid, UNPROCESSABLE_ENTITY).jsonPath("$.path")
